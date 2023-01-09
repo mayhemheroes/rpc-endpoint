@@ -1,4 +1,3 @@
-# FROM fuzzers/go-fuzz:1.2.0
 FROM golang:1.18 as builder
 
 COPY . /rpc-endpoint
@@ -9,8 +8,8 @@ RUN go get github.com/dvyukov/go-fuzz/go-fuzz-dep
 RUN apt update && apt install -y clang
 
 
-RUN go-fuzz-build -libfuzzer -o fuzz.a && \
-    clang -fsanitize=fuzzer fuzz.a -o fuzz.libfuzzer
+RUN go-fuzz-build -libfuzzer -o fuzzServer.a && \
+    clang -fsanitize=fuzzer fuzzServer.a -o fuzzServer.libfuzzer
 
 FROM debian:bookworm-slim
-COPY --from=builder /rpc-endpoint/mayhem/fuzz.libfuzzer /
+COPY --from=builder /rpc-endpoint/mayhem/fuzzServer.libfuzzer /

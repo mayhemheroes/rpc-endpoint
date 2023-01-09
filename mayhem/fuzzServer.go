@@ -1,4 +1,4 @@
-package fuzz
+package fuzzServer
 
 import "strconv"
 import "github.com/flashbots/rpc-endpoint/server"
