@@ -1,22 +1,27 @@
 .PHONY: all build test clean lint cover cover-html up down
 
+APP_NAME := rpc-endpoint
 GOPATH := $(if $(GOPATH),$(GOPATH),~/go)
 GIT_VER := $(shell git describe --tags --always --dirty="-dev")
+PACKAGES := $(shell go list -mod=readonly ./...)
 
 all: clean build
 
 build:
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.version=${GIT_VER}" -v -o rpc-endpoint cmd/server/main.go
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.version=${GIT_VER}" -v -o ${APP_NAME} cmd/server/main.go
 
 clean:
-	rm -rf rpc-endpoint build/
+	rm -rf ${APP_NAME} build/
 
 test:
 	go test ./...
 
+gofmt:
+	gofmt -w ./
+
 lint:
-	gofmt -d ./
-	go vet -unreachable=false ./... # go vet checks are disabled for unreachable code
+	go fmt -mod=readonly $(PACKAGES)
+	go vet ./...
 	staticcheck ./...
 
 cover:
@@ -34,3 +39,9 @@ up:
 
 down:
 	docker-compose down -v
+
+build-for-docker:
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.version=${GIT_VER}" -v -o ${APP_NAME} cmd/server/main.go
+
+docker-image:
+	DOCKER_BUILDKIT=1 docker build --platform linux/amd64  . -t ${IMAGE_REGISTRY_ACCOUNT}/${APP_NAME}:${GIT_VER}

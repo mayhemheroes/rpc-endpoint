@@ -10,13 +10,15 @@ The endpoint is live at **https://rpc.flashbots.net/**
 
 It does two basic things:
 - It receives JSON-RPC requests, proxies those to a node, and responds with the result of the proxied request.
-- On receiving an `eth_sendRawTransaction` call with 42000 gas or more (and not on whitelisted method), the call is sent to the Flashbots relay as a private transaction, and submitted as bundles for up to 25 blocks.
+- On receiving an `eth_sendRawTransaction` call which has data and is not on whitelisted methods, the call is sent to the Flashbots relay as a private transaction, and submitted as bundles for up to 25 blocks.
 
 There are a few key benefits to using the Flashbots RPC endpoint:
 
 - Frontrunning protection: your transaction will not be seen by hungry sandwich bots in the public mempool.
 - No failed transactions: your transaction will only be mined if it doesn't include any reverts, so you don't pay for failed transactions. Note: your transaction could be uncled, emitted to the mempool, and then included on-chain.
 - Priority in blocks: transactions sent via Flashbots are mined at the top of blocks, giving them priority.
+
+Privacy notice: rpc-endpoint does not track, store or log any kind of user information (i.e. IP, location, etc.).
 
 ## Transaction Status Check
 

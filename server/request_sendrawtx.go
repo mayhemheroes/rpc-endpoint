@@ -55,7 +55,7 @@ func (r *RpcRequest) handle_sendRawTransaction() {
 		return
 	}
 
-	r.logger.Info("[sendRawTransaction] sending raw transaction", "tx", r.rawTxHex, "txHash", r.tx.Hash(), "fromAddress", r.txFrom, "toAddress", AddressPtrToStr(r.tx.To()), "txNonce", r.tx.Nonce(), "txGasPrice", BigIntPtrToStr(r.tx.GasPrice()), "ip", r.ip)
+	r.logger.Info("[sendRawTransaction] sending raw transaction", "tx", r.rawTxHex, "txHash", r.tx.Hash(), "fromAddress", r.txFrom, "toAddress", AddressPtrToStr(r.tx.To()), "txNonce", r.tx.Nonce(), "txGasPrice", BigIntPtrToStr(r.tx.GasPrice()))
 	txFromLower := strings.ToLower(r.txFrom)
 
 	// store tx info to ethSendRawTxEntries which will be stored in db for data analytics reason
@@ -91,10 +91,14 @@ func (r *RpcRequest) handle_sendRawTransaction() {
 	if err != nil {
 		r.logger.Error("[sendRawTransaction] Redis:SetSenderOfTxHash failed: %v", err)
 	}
-	isOnOfacList := isOnOFACList(r.txFrom) || isOnOFACList(r.tx.To().String())
+	var txToAddr string
+	if r.tx.To() != nil { // to address will be nil for contract creation tx
+		txToAddr = r.tx.To().String()
+	}
+	isOnOfacList := isOnOFACList(r.txFrom) || isOnOFACList(txToAddr)
 	r.ethSendRawTxEntry.IsOnOafcList = isOnOfacList
 	if isOnOfacList {
-		r.logger.Info("[sendRawTransaction] Blocked tx due to ofac sanctioned address", "txFrom", r.txFrom, "txTo", r.tx.To().String())
+		r.logger.Info("[sendRawTransaction] Blocked tx due to ofac sanctioned address", "txHash", txHashLower, "txFrom", r.txFrom, "txTo", txToAddr)
 		r.writeRpcError("blocked tx due to ofac sanctioned address", types.JsonRpcInvalidRequest)
 		return
 	}
@@ -169,12 +173,6 @@ func (r *RpcRequest) handle_sendRawTransaction() {
 func (r *RpcRequest) doesTxNeedFrontrunningProtection(tx *ethtypes.Transaction) bool {
 	gas := tx.Gas()
 	r.logger.Info("[protect-check]", "gas", gas)
-
-	// Flashbots Relay will reject anything less than 42000 gas, so we just send those to the mempool
-	// Anyway things with that low of gas probably don't need frontrunning protection regardless
-	if gas < 42000 {
-		return false
-	}
 
 	data := hex.EncodeToString(tx.Data())
 	r.logger.Info("[protect-check] ", "tx-data", data)
