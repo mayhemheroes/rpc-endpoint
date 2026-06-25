@@ -1,0 +1,9 @@
+# Namespaced project name that the target belongs to
+project: rpc-endpoint
+
+# Target name (preserved from the original integration for corpus/defect continuity)
+target: server
+
+cmds:
+  - cmd: /mayhem/fuzzServer
+    libfuzzer: true
